@@ -1,5 +1,10 @@
 <template>
     <div>
+        <div class="flex flex-wrap w-full p-2 my-2 h-12">
+            <small class="text-white p-2 my-2 rounded-sm"
+                   :class="(message === '') ? '' : 'bg-blue-lighter'"
+            >{{ message }}</small>
+        </div>
         <div class="flex flex-wrap w-full mb-8">
 
             <!-- URL input -->
@@ -65,7 +70,8 @@
                 searchWord: '',
                 words: [],
                 lastShortened: [],
-                recentLinks: []
+                recentLinks: [],
+                message: ''
             }
         },
         computed: {
@@ -99,10 +105,14 @@
 
 
             saveUrl() {
-                axios.put(`shorten/${this.selectedWord}`, {
+                axios.put(`shorten`, {
                     word: this.selectedWord,
                     url: this.searchUrl
                 }).then(response => {
+
+                    this.message = '';
+                    this.message = response.data.message[0];
+                    setTimeout(() => this.message = '', 15000);
                     this.selectedWord = null;
                     this.searchUrl = '';
                     this.fetchWords();

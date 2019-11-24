@@ -18,7 +18,7 @@
         <img class="h-logo" src="{{ url('images/hn-bit-logo.png') }}" alt="">
     </div>
 </div>
-<div class="container max-w-6xl mx-auto pt-12">
+<div class="container max-w-6xl mx-auto">
     <div id="shorten">
         <shorten-component global-url="{{ $globalURL }}"></shorten-component>
     </div>

@@ -2024,6 +2024,11 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -2040,7 +2045,8 @@ __webpack_require__.r(__webpack_exports__);
       searchWord: '',
       words: [],
       lastShortened: [],
-      recentLinks: []
+      recentLinks: [],
+      message: ''
     };
   },
   computed: {
@@ -2080,10 +2086,15 @@ __webpack_require__.r(__webpack_exports__);
     saveUrl: function saveUrl() {
       var _this4 = this;
 
-      axios.put("shorten/".concat(this.selectedWord), {
+      axios.put("shorten", {
         word: this.selectedWord,
         url: this.searchUrl
       }).then(function (response) {
+        _this4.message = '';
+        _this4.message = response.data.message[0];
+        setTimeout(function () {
+          return _this4.message = '';
+        }, 15000);
         _this4.selectedWord = null;
         _this4.searchUrl = '';
 
@@ -3688,6 +3699,17 @@ var render = function() {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", [
+    _c("div", { staticClass: "flex flex-wrap w-full p-2 my-2 h-12" }, [
+      _c(
+        "small",
+        {
+          staticClass: "text-white p-2 my-2 rounded-sm",
+          class: _vm.message === "" ? "" : "bg-blue-lighter"
+        },
+        [_vm._v(_vm._s(_vm.message))]
+      )
+    ]),
+    _vm._v(" "),
     _c("div", { staticClass: "flex flex-wrap w-full mb-8" }, [
       _c("div", { staticClass: "w-full md:w-2/5 mb-2 px-2 md:pr-0" }, [
         _c("div", { staticClass: "flex flex-wrap items-stretch" }, [

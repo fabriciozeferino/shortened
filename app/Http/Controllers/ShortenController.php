@@ -19,85 +19,51 @@ class ShortenController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param \App\Shorten $shorten
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Shorten $shorten)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\Shorten $shorten
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Shorten $shorten)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param \Illuminate\Http\Request $request
      * @param \App\Shorten $shorten
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(ShortenRequest $request, Shorten $shorten)
     {
-        $urlRequested = $request->url;
         $word = isset($request->word) ? $request->word : null;
+        $mainUrl = config('app.url');
+        $data = [];
 
-
-        $url = $shorten
-            ->where('url', $urlRequested)
-            ->orWhere('word', $urlRequested)
+        $shortenAlreadyCreated = $shorten
+            ->where('url', $request->url)
+            ->orWhere('word', $request->url)
             ->first();
 
         // URL already registered
-        if ($url) {
-            $url->touch();
+        if ($shortenAlreadyCreated) {
 
-            return $this->responseWithAttributes($url);
+            $shortenAlreadyCreated->touch();
+
+            $data['shortened'] = $shortenAlreadyCreated;
+            $data['message'][] = 'URL ' . $mainUrl . '/' . $shortenAlreadyCreated->url . ' already in use, register updated';
+
+            return $this->responseWithData($data);
         }
 
-        // URL is typed shortened
-        if (!preg_match('/[^a-z]/', $urlRequested)) {
+        // URL is a single word shortened word
+        if (!preg_match('/[^a-z]/', $request->url)) {
 
             $url = $shorten
-                ->where('word', $urlRequested)
+                ->where('word', $request->url)
                 ->where('url', null)
                 ->first();
 
             if ($url) {
+                $url->updata([
+                    'url' => $request->url
+                ]);
 
-                $url->url = $urlRequested;
-                $url->save();
-                return $this->responseWithAttributes($url);
+                $data['shortened'] = $shortenAlreadyCreated;
+                $data['message'][] = 'URL ' . $mainUrl . '/' . $request->url . ' shortened to ' . $mainUrl . '/' . $shortenAlreadyCreated->word;
+
+                return $this->responseWithData($data);
             }
         }
 
@@ -109,40 +75,28 @@ class ShortenController extends Controller
                 ->first();
 
             $shortenModel->update([
-                'url' => $urlRequested
+                'url' => $request->url
             ]);
 
-            return $this->responseWithAttributes($shortenModel);
+            $data['shortened'] = $shortenModel;
+            $data['message'][] = 'URL ' . $mainUrl . '/' . $request->url . ' shortened to ' . $mainUrl . '/' . $shortenModel->word;
+
+            return $this->responseWithData($data);
         }
 
-        //{"message":"The given data was invalid.","errors":{"url":["The url format is invalid."]}}
+        $shorten
+            ->where('word', $request->word)
+            ->update(['url' => $request->url]);
 
-        $shorten->word = $request->word;
-        $shorten->url = $request->url;
+        $data['shortened'] = $shorten;
+        $data['message'][] = 'URL ' . $mainUrl . '/' . $request->url . ' shortened to ' . $mainUrl . '/' . $request->word;
 
-        $shorten->save();
-
-        return $this->responseWithAttributes($shorten);
-    }
-
-    private function responseWithAttributes($param)
-    {
-        return response()->json([
-            'data' => $param
-        ]);
+        return $this->responseWithData($data);
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Shorten $shorten
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Shorten $shorten)
-    {
-        //
-    }
-
     public function fetchWords()
     {
         $data = Shorten::whereNull('url')->pluck('word');
@@ -150,10 +104,23 @@ class ShortenController extends Controller
         return response()->json($data);
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function fetchRecentLinks()
     {
-        $data = Shorten::whereNotNull('url')->orderBy('updated_at', 'DESC')->get();
+        $data = Shorten::whereNotNull('url')->orderBy('updated_at', 'DESC')->limit(10)->get();
 
+        return response()->json($data);
+    }
+
+
+    /**
+     * @param $data
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function responseWithData($data)
+    {
         return response()->json($data);
     }
 }
