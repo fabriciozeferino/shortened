@@ -12,5 +12,10 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('index');
 });
+
+
+Route::get('/shorten/fetch', 'ShortenController@fetchWords');
+Route::put('/shorten/{shorten}', 'ShortenController@update');
+
