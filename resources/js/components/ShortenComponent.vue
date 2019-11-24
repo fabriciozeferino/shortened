@@ -1,42 +1,47 @@
 <template>
     <div>
         <div class="flex flex-wrap w-full mb-8">
-            <!-- URL input -->
-            <div class="w-full md:w-2/5 px-2 md:pr-2">
-                <input
-                    v-model="searchUrl"
-                    class="placeholder-gray"
-                    type="text"
-                    placeholder="Long URL (required)">
-                <p class="text-red-500 text-xs italic hidden">Please fill out this field.</p>
-            </div>
-            <div class="flex flex-wrap items-stretch w-full mb-4 relative">
-                <div class="flex -mr-px">
-                    <span class="flex items-center leading-normal bg-grey-lighter rounded rounded-r-none border border-r-0 border-grey-light px-3 whitespace-no-wrap text-grey-dark text-sm">https://example.com/users/</span>
-                </div>
-                <input type="text" class="flex-shrink flex-grow flex-auto leading-normal w-px flex-1 border h-10 border-grey-light rounded rounded-l-none px-3 relative" >
-            </div>
 
+            <!-- URL input -->
+            <div class="w-full md:w-2/5 mb-2 px-2 md:pr-0">
+                <div class="flex flex-wrap items-stretch">
+                    <div class="flex -mr-px appearance-none border p-1"><span
+                        class="leading-tight">{{ globalUrl }}/</span></div>
+                    <input
+                        v-model="searchUrl"
+                        class="placeholder-gray inline-block flex-shrink flex-grow flex-auto"
+                        type="text"
+                        placeholder="Long URL (required)"
+                    >
+                </div>
+            </div>
 
             <!-- Word selector -->
-            <div class="w-full md:w-2/5 px-2">
+            <div class="w-full md:w-2/5 mb-2 px-2">
                 <Autocomplete v-model="selectedWord" :options="options" :search="searchWord"
                               @search="newSearchText => {searchWord = newSearchText}"/>
             </div>
 
             <!-- Private checkbox -->
-            <div class="w-auto px-2 align-middle">
+            <div class="w-auto mb-2 px-2 align-middle">
                 <input id="privateCheckbox" class="leading-tight" type="checkbox" name="private">
                 <label class="text-sm leading-tight" for="privateCheckbox">Private?</label>
             </div>
 
             <!-- Shorten submit button-->
-            <div class="w-4/6 md:w-1/12 px-2">
-                <button @click="saveUrl">Shorten</button>
+            <div class="w-4/6 mb-2 px-2 md:w-1/12">
+                <button
+                    @click="saveUrl" v-bind:disabled="searchUrl === ''"
+                    :class="(searchUrl === '') ? 'bg-blue-lighter' : '' "
+                >
+                    Shorten
+                </button>
+                {{searchUrl}}
             </div>
         </div>
-        <div>
-            <h1 class="text-title font-bold">Recent links</h1>
+
+        <div class="flex flex-wrap w-full p-2">
+            <RecentLinks :links="recentLinks" :url="globalUrl + '/'"/>
         </div>
 
     </div>
@@ -44,11 +49,13 @@
 
 <script>
     import Autocomplete from "./Autocomplete";
+    import RecentLinks from "./RecentLinks";
 
     export default {
         name: 'shorten',
         components: {
-            Autocomplete
+            Autocomplete,
+            RecentLinks
         },
         props: ['globalUrl'],
         data() {
@@ -57,7 +64,8 @@
                 selectedWord: null,
                 searchWord: '',
                 words: [],
-                lastShortened: []
+                lastShortened: [],
+                recentLinks: []
             }
         },
         computed: {
@@ -69,6 +77,7 @@
         },
         mounted() {
             this.fetchWords();
+            this.fetchRecentLinks();
         },
         methods: {
 
@@ -80,6 +89,15 @@
                     })
             },
 
+            fetchRecentLinks() {
+                return axios.get('shorten/fetchRecentLinks/')
+                    .then(response => {
+                        this.recentLinks = [];
+                        this.recentLinks = (response.data);
+                    })
+            },
+
+
             saveUrl() {
                 axios.put(`shorten/${this.selectedWord}`, {
                     word: this.selectedWord,
@@ -88,6 +106,7 @@
                     this.selectedWord = null;
                     this.searchUrl = '';
                     this.fetchWords();
+                    this.fetchRecentLinks();
                 })
             }
         }

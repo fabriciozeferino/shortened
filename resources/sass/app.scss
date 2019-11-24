@@ -3,9 +3,8 @@
 @tailwind components;
 
 input[type="text"] {
-    @apply appearance-none w-full border py-1 px-1 mb-3 leading-tight;
+    @apply appearance-none border py-1 px-1 leading-tight;
 }
-
 
 button {
     @apply bg-blue text-white font-bold py-1 px-8 rounded-sm border border-gray leading-tight;

@@ -17,5 +17,6 @@ Route::get('/', function () {
 
 
 Route::get('/shorten/fetch', 'ShortenController@fetchWords');
+Route::get('/shorten/fetchRecentLinks', 'ShortenController@fetchRecentLinks');
 Route::put('/shorten/{shorten}', 'ShortenController@update');
 

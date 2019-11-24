@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ShortenRequest;
 use App\Shorten;
 use Illuminate\Http\Request;
 
@@ -66,57 +67,68 @@ class ShortenController extends Controller
      * @param \App\Shorten $shorten
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Shorten $shorten)
+    public function update(ShortenRequest $request, Shorten $shorten)
     {
-        /*$validatedData = $request->validate([
-            'url' => 'required|url',
-        ]);*/
-        $globalURL = config('app.url');
-        $errors = [];
-        $urlRequest = $request->url;
-        $word = $request->word ?? null;
+        $urlRequested = $request->url;
+        $word = isset($request->word) ? $request->word : null;
 
-        $url = $shorten->where('url', $urlRequest)->first();
+
+        $url = $shorten
+            ->where('url', $urlRequested)
+            ->orWhere('word', $urlRequested)
+            ->first();
 
         // URL already registered
-        if (!$url){
-            $url->updated_at = now();
+        if ($url) {
+            $url->touch();
+
+            return $this->responseWithAttributes($url);
         }
-
-
-        if ($word){
-
-            $urlRequest;
-
-        }
-
-
-
 
         // URL is typed shortened
-        // WORD is not selected
-        // WORD is selected
+        if (!preg_match('/[^a-z]/', $urlRequested)) {
 
+            $url = $shorten
+                ->where('word', $urlRequested)
+                ->where('url', null)
+                ->first();
+
+            if ($url) {
+
+                $url->url = $urlRequested;
+                $url->save();
+                return $this->responseWithAttributes($url);
+            }
+        }
+
+        // If word not selected get an radon free word
+        if (!$word) {
+            $shortenModel = $shorten
+                ->whereNull('url')
+                ->inRandomOrder()
+                ->first();
+
+            $shortenModel->update([
+                'url' => $urlRequested
+            ]);
+
+            return $this->responseWithAttributes($shortenModel);
+        }
 
         //{"message":"The given data was invalid.","errors":{"url":["The url format is invalid."]}}
 
-       /* if (!$validatedData) {
-
-            return response()->json($validatedData);
-        }
-
-        if (!$validatedData) {
-
-            return response()->json($validatedData);
-        }*/
-
+        $shorten->word = $request->word;
         $shorten->url = $request->url;
 
         $shorten->save();
 
+        return $this->responseWithAttributes($shorten);
+    }
+
+    private function responseWithAttributes($param)
+    {
         return response()->json([
-            'shorten' => $shorten,
-            'errors' => $errors
+            'data' => $param
         ]);
     }
 
@@ -134,6 +146,13 @@ class ShortenController extends Controller
     public function fetchWords()
     {
         $data = Shorten::whereNull('url')->pluck('word');
+
+        return response()->json($data);
+    }
+
+    public function fetchRecentLinks()
+    {
+        $data = Shorten::whereNotNull('url')->orderBy('updated_at', 'DESC')->get();
 
         return response()->json($data);
     }

@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -11,14 +12,22 @@ use Illuminate\Database\Eloquent\Model;
 class Shorten extends Model
 {
     protected $table = 'shortens';
+
+    protected $guarded = [];
+
+    public function getUpdatedAtAttribute($value)
+    {
+        return  Carbon::parse($this->attributes['updated_at'])->diffForHumans();
+    }
+
     /**
      * Retrieve the model for a bound value.
      *
-     * @param  mixed  $value
+     * @param mixed $value
      * @return \Illuminate\Database\Eloquent\Model|null
      */
     public function resolveRouteBinding($value)
     {
-        return $this->where('word', $value)->first() ?? abort(404);
+        return $this->where('word', $value)->first() ?? $this;
     }
 }

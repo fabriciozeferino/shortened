@@ -15,7 +15,7 @@ class CreateShortensTable extends Migration
     {
         Schema::create('shortens', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('eff_id')->unsigned();
+            $table->integer('eff_id')->unsigned()->nullable();
             $table->string('word', 20)->unique();
             $table->string('url', 140)->nullable();
             $table->timestamps();
