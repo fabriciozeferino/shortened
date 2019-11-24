@@ -3643,7 +3643,7 @@ var render = function() {
     "div",
     { staticClass: "w-full" },
     [
-      _c("h1", { staticClass: "text-title mb-2" }, [_vm._v("Recent Links")]),
+      _vm._m(0),
       _vm._v(" "),
       _vm._l(_vm.links, function(link, index) {
         return _c(
@@ -3676,7 +3676,16 @@ var render = function() {
     2
   )
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("h1", { staticClass: "text-title mb-2" }, [
+      _c("a", { attrs: { href: "shorten/list" } }, [_vm._v("Recent Links")])
+    ])
+  }
+]
 render._withStripped = true
 
 

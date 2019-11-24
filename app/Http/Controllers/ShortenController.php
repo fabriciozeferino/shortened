@@ -123,4 +123,11 @@ class ShortenController extends Controller
     {
         return response()->json($data);
     }
+
+
+    public function list()
+    {
+        $links = Shorten::whereNotNull('url')->get();
+        return view('list', compact('links'));
+    }
 }

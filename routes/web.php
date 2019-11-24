@@ -20,3 +20,9 @@ Route::get('shorten/fetch', 'ShortenController@fetchWords');
 Route::get('shorten/fetchRecentLinks', 'ShortenController@fetchRecentLinks');
 Route::put('shorten', 'ShortenController@update');
 
+Route::get('shorten/list', 'ShortenController@list');
+
+Route::fallback(function() {
+    return 'Hm, why did you land here somehow?';
+});
+
