@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ShortenRequest;
 use App\Shorten;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class ShortenController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -21,54 +24,53 @@ class ShortenController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Shorten $shorten
-     * @return \Illuminate\Http\JsonResponse
+     * @param ShortenRequest $request
+     * @param Shorten $shorten
+     * @return JsonResponse
      */
     public function update(ShortenRequest $request, Shorten $shorten)
     {
-        $word = isset($request->word) ? $request->word : null;
+        $word = $request->has('word') ? $request->word : null;
         $mainUrl = config('app.url');
         $data = [];
 
-        $shortenAlreadyCreated = $shorten
-            ->where('url', $request->url)
-            ->orWhere('word', $request->url)
-            ->first();
+        $shortenAlreadyInUse = $shorten->checkUrl($request->url);
 
-        // URL already registered
-        if ($shortenAlreadyCreated) {
+        // URL already in use
+        if ($shortenAlreadyInUse) {
 
-            $shortenAlreadyCreated->touch();
+            $shortenAlreadyInUse->touch();
 
-            $data['shortened'] = $shortenAlreadyCreated;
-            $data['message'][] = 'URL ' . $mainUrl . '/' . $shortenAlreadyCreated->url . ' already in use, register updated';
+            $data['shortened'] = $shortenAlreadyInUse;
+            $data['message'][] = 'URL ' . $mainUrl . '/' . $shortenAlreadyInUse->url . ' already in use as ' . $mainUrl . '/' . $shortenAlreadyInUse->word . ', register updated';
 
             return $this->responseWithData($data);
         }
 
-        // URL is a single word shortened word
-        if (!preg_match('/[^a-z]/', $request->url)) {
+        // URL is a single word can be a shortened word
+        if (!preg_match('/[^a-z]/', $request->url) || !$word) {
 
-            $url = $shorten
-                ->where('word', $request->url)
-                ->where('url', null)
-                ->first();
+            $url = $shorten->checkUrl($request->url, $request->url);
 
             if ($url) {
-                $url->updata([
+
+                info('url');
+
+
+                $url->update([
                     'url' => $request->url
                 ]);
 
-                $data['shortened'] = $shortenAlreadyCreated;
-                $data['message'][] = 'URL ' . $mainUrl . '/' . $request->url . ' shortened to ' . $mainUrl . '/' . $shortenAlreadyCreated->word;
+                $data['shortened'] = $shortenAlreadyInUse;
+                $data['message'][] = 'URL ' . $mainUrl . '/' . $url->url . ' shortened to ' . $mainUrl . '/' . $url->word;
 
                 return $this->responseWithData($data);
             }
         }
 
-        // If word not selected get an radon free word
+        // If word is null get an radon free word
         if (!$word) {
+
             $shortenModel = $shorten
                 ->whereNull('url')
                 ->inRandomOrder()
@@ -84,8 +86,8 @@ class ShortenController extends Controller
             return $this->responseWithData($data);
         }
 
-        $shorten
-            ->where('word', $request->word)
+        // Create a new shortened URL
+        $shorten->where('word', $request->word)
             ->update(['url' => $request->url]);
 
         $data['shortened'] = $shorten;
@@ -95,7 +97,7 @@ class ShortenController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function fetchWords()
     {
@@ -105,7 +107,7 @@ class ShortenController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function fetchRecentLinks()
     {
@@ -117,7 +119,7 @@ class ShortenController extends Controller
 
     /**
      * @param $data
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     private function responseWithData($data)
     {
@@ -125,9 +127,27 @@ class ShortenController extends Controller
     }
 
 
+    /**
+     * Return list of URL's already in use
+     *
+     * @return Factory|View
+     */
     public function list()
     {
-        $links = Shorten::whereNotNull('url')->get();
+        $links = Shorten::whereNotNull('url')->orderBy('visited', 'DESC')->get();
+
         return view('list', compact('links'));
+    }
+
+    public function listWord($word)
+    {
+        $shorten = New Shorten;
+        if ($word) {
+            $shorten->visited($word);
+        }
+
+        $links = $shorten->whereNotNull('url')->orderBy('visited', 'DESC')->get();
+
+        return view('list', compact('links', 'word'));
     }
 }

@@ -22,7 +22,4 @@ Route::put('shorten', 'ShortenController@update');
 
 Route::get('shorten/list', 'ShortenController@list');
 
-Route::fallback(function() {
-    return 'Hm, why did you land here somehow?';
-});
-
+Route::any('/{any}', 'ShortenController@listWord')->where('any', '.*');
