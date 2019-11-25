@@ -1,1 +1,13 @@
-//
+@tailwind base;
+
+@tailwind components;
+
+input[type="text"] {
+    @apply appearance-none border py-1 px-1 leading-tight;
+}
+
+button {
+    @apply bg-blue text-white font-bold py-1 px-8 rounded-sm border border-gray leading-tight;
+}
+
+@tailwind utilities;
