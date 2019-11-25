@@ -1,6 +1,6 @@
 <template>
     <div class="w-full">
-        <h1 class="text-title mb-2"><a href="shorten/list">Recent Links</a></h1>
+        <a class="underline" href="shorten/list"><h1 class="text-title mb-2 inline-block">Recent Links </h1><small>Click here to check number of visualisations</small></a>
         <div v-for="(link, index) in links" class="p-4 border bg-white"
              :class="((links.length -1) === index) ?'':'border-b-0'">
 

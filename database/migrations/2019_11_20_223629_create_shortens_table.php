@@ -18,6 +18,7 @@ class CreateShortensTable extends Migration
             $table->integer('eff_id')->unsigned()->nullable();
             $table->string('word', 20)->unique();
             $table->string('url', 140)->nullable();
+            $table->integer('visited')->unsigned()->default(0);
             $table->timestamps();
 
             $table->index(['word', 'url']);
